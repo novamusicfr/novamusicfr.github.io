@@ -67,7 +67,8 @@ function renderAuth(msg = '', kind = 'err') {
     </form>
     ${!signup ? `<button class="linkbtn" id="forgot">Mot de passe oublié ?</button>` : ''}
     <div class="auth-msg ${kind}" id="authMsg">${esc(msg)}</div>
-    <p class="legal">En continuant, tu acceptes les conditions d'utilisation de Nova Music.</p>`;
+    <p class="legal">En continuant, tu acceptes les conditions d'utilisation de Nova Music.</p>
+    ${platform === 'web' ? `<a class="btn ghost" href="./telecharger.html" style="text-decoration:none;margin-top:14px">📥 Télécharger l'app PC / Android / iPhone</a>` : ''}`;
 
   card.querySelectorAll('[data-mode]').forEach((b) => (b.onclick = () => { authMode = b.dataset.mode; renderAuth(); }));
   const setMsg = (m, k = 'err') => { const el = $('#authMsg'); el.textContent = m; el.className = 'auth-msg ' + k; };
@@ -345,3 +346,9 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 renderSources(); route();
+if (platform === 'web') {
+  const a = document.createElement('a');
+  a.href = './telecharger.html';
+  a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Télécharger l\'app';
+  document.querySelector('aside .nav').appendChild(a);
+}
