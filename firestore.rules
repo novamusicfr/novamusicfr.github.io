@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Règles Nova Music — à coller dans Firebase → Firestore → Règles → Publier.
+// - Chaque utilisateur ne voit que son compte et sa bibliothèque.
+// - Personne ne peut se donner Premium tout seul : il faut un code valide
+//   et pas encore utilisé dans la collection "codes" (créée par toi).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMe(userId) { return signedIn() && request.auth.uid == userId; }
+
+    // Vérifie qu'un passage en Premium vient bien d'un code consommé
+    // dans la même écriture groupée (batch).
+    function validRedeem(userId) {
+      let p = request.resource.data.premium;
+      let path = /databases/$(database)/documents/codes/$(p.code);
+      return p.code is string
+        && p.code.matches('^[A-Z0-9-]{4,40}$')
+        && p.active == true
+        && exists(path)
+        && get(path).data.used == false
+        && getAfter(path).data.usedBy == userId
+        && p.plan == get(path).data.get('plan', 'code')
+        && (!('days' in get(path).data)
+            || (p.until is timestamp
+                && p.until <= request.time + duration.value(get(path).data.days, 'd')));
+    }
+
+    match /users/{userId} {
+      allow read: if isMe(userId);
+      allow create: if isMe(userId) && !('premium' in request.resource.data);
+      allow update: if isMe(userId) && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['premium'])
+        || validRedeem(userId)
+      );
+
+      match /library/{itemId} {
+        allow read, delete: if isMe(userId);
+        allow create, update: if isMe(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 80
+          && request.resource.data.embed is string
+          && request.resource.data.embed.size() <= 600;
+      }
+    }
+
+    // Codes Premium : un document par code (ID du document = le code).
+    // Champs : used (false), plan ("mois" | "an" | "vie"), days (optionnel, ex. 30)
+    match /codes/{code} {
+      allow get: if signedIn();          // lire UN code dont on connaît le nom
+      allow list: if false;              // impossible de lister tous les codes
+      allow update: if signedIn()
+        && resource.data.used == false
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy', 'usedAt']);
+    }
+  }
+}

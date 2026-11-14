@@ -1,0 +1,10 @@
+node_modules/
+dist/
+release/
+android/
+ios/
+.DS_Store
+*.log
+SECRET-ne-pas-publier/
+*.keystore
+*.jks

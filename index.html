@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nova Music">
+<title>Nova Music</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<!-- ===== Écran de compte ===== -->
+<div class="auth" id="auth">
+  <div class="auth-card" id="authCard">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<div class="app hidden" id="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div>
+      <div>Nova<small>Music</small></div>
+    </div>
+    <nav class="nav">
+      <a href="#accueil" data-v="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Accueil</a>
+      <a href="#bibliotheque" data-v="bibliotheque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16M9 4v16M14 4l6 16"/></svg>Bibliothèque</a>
+      <a href="#ajouter" data-v="ajouter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Importer</a>
+      <a href="#premium" data-v="premium" class="prem"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>Nova Premium</a>
+    </nav>
+    <div class="side-foot">
+      <div class="adbox" id="sideAd">
+        <span class="tag">Publicité</span>
+        <b>Marre des pubs ?</b>
+        <p>Passe à Nova Premium et écoute sans aucune interruption.</p>
+        <a href="#premium" class="btn gold" style="margin-top:12px;padding:8px 14px;font-size:13px;text-decoration:none">Découvrir</a>
+      </div>
+      <div class="status" id="statusBox">
+        <div class="dot" id="statusDot">N</div>
+        <div class="who"><b id="statusName">—</b><small id="statusSub">Compte gratuit · avec pubs</small></div>
+        <button class="logout" id="logoutBtn" title="Se déconnecter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+
+    <!-- Accueil -->
+    <div class="mob-top">
+      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div><div>Nova<small>Music</small></div></div>
+      <button class="logout" id="logoutBtnMob" title="Se déconnecter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg></button>
+    </div>
+    <section class="view" id="v-accueil">
+      <h1 id="hello">Bonsoir 👋</h1>
+      <div id="verifyBox"></div>
+      <p class="sub">Toute ta musique Spotify, YouTube, Deezer, SoundCloud et Apple Music au même endroit.</p>
+      <form class="row" id="quickForm" style="margin-top:22px;max-width:760px">
+        <input class="input" id="quickUrl" placeholder="Colle un lien de playlist, d'album ou de titre…" autocomplete="off">
+        <button class="btn" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Importer</button>
+      </form>
+      <div class="stats" id="stats"></div>
+      <h2>Écoutés récemment</h2>
+      <div class="grid" id="recentGrid"></div>
+      <h2>Tes favoris</h2>
+      <div class="grid" id="favGrid"></div>
+    </section>
+
+    <!-- Bibliothèque -->
+    <section class="view" id="v-bibliotheque">
+      <h1>Bibliothèque</h1>
+      <p class="sub" id="libCount"></p>
+      <div class="row" style="margin-top:18px;max-width:760px">
+        <input class="input" id="search" placeholder="Rechercher dans ta bibliothèque…" autocomplete="off">
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="grid" id="libGrid"></div>
+    </section>
+
+    <!-- Importer -->
+    <section class="view" id="v-ajouter">
+      <h1>Importer une playlist</h1>
+      <p class="sub">Colle le lien de partage depuis n'importe quelle plateforme. Nova Music détecte la source tout seul.</p>
+      <form class="panel" id="addForm">
+        <label for="addUrl">Lien de partage</label>
+        <input class="input" id="addUrl" placeholder="https://open.spotify.com/playlist/…" autocomplete="off">
+        <div class="detect" id="detect"></div>
+        <label for="addName">Nom (optionnel)</label>
+        <input class="input" id="addName" placeholder="Ex : Chill du soir" autocomplete="off" maxlength="60">
+        <div class="row" style="margin-top:20px">
+          <button class="btn" type="submit" id="addBtn" disabled>Ajouter à ma bibliothèque</button>
+          <button class="btn ghost" type="button" id="addPlayBtn" disabled>Ajouter et écouter</button>
+        </div>
+      </form>
+      <div class="sources" id="sources"></div>
+    </section>
+
+    <!-- Premium -->
+    <section class="view" id="v-premium">
+      <div class="hero">
+        <h1>Nova <span>Premium</span></h1>
+        <p class="sub" style="color:#ddd8ff;max-width:520px">Ta musique, rien que ta musique. Zéro pub, lecture instantanée, badge exclusif.</p>
+        <div class="perks">
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>Aucune publicité</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>Lecture immédiate</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>Playlists illimitées</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>Badge doré</div>
+        </div>
+      </div>
+      <div id="premiumZone"></div>
+    </section>
+  </main>
+
+  <!-- ===== Player ===== -->
+  <div class="player" id="player">
+    <div class="player-head">
+      <div class="mini" id="pMini">N</div>
+      <div class="t"><b id="pTitle">—</b><small id="pSub">—</small></div>
+      <div class="eq"><i></i><i></i><i></i><i></i></div>
+      <a class="ic" id="pOpen" href="#" target="_blank" rel="noopener" title="Ouvrir sur la plateforme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M19 14v6H5V5h6"/></svg></a>
+      <button class="ic" id="pToggle" title="Réduire"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="ic" id="pClose" title="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="player-body" id="pBody"></div>
+  </div>
+
+  <nav class="mob-nav nav">
+    <a href="#accueil" data-v="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Accueil</a>
+    <a href="#bibliotheque" data-v="bibliotheque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16M9 4v16M14 4l6 16"/></svg>Biblio</a>
+    <a href="#ajouter" data-v="ajouter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Importer</a>
+    <a href="#premium" data-v="premium"><svg viewBox="0 0 24 24" fill="#ffc94d"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>Premium</a>
+  </nav>
+</div>
+
+<!-- Modal pub -->
+<div class="modal" id="adModal">
+  <div class="box">
+    <div class="ad-visual" id="adVisual"></div>
+    <div class="ad-bar"><i id="adBar"></i></div>
+    <div class="row" style="justify-content:space-between">
+      <a href="#premium" class="btn gold" id="adPremium" style="text-decoration:none">Retirer les pubs</a>
+      <button class="btn ghost" id="adSkip" disabled>Passer dans 5</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal générique -->
+<div class="modal" id="infoModal">
+  <div class="box">
+    <h3 id="infoTitle"></h3>
+    <p id="infoText"></p>
+    <div class="row" style="margin-top:20px;justify-content:flex-end" id="infoActions"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
