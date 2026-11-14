@@ -7,6 +7,8 @@ import {
 import {
   ensureUser, watchUser, watchLibrary, addToLibrary, updateItem,
   removeItem, markPlayed, premiumActive, redeemCode, setDisplayName,
+  watchPlaylists, createPlaylist, renamePlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist,
+  createCodes, watchCodes, deleteCode,
 } from './db.js';
 import { P, TYPE_FR, parseLink } from './links.js';
 
@@ -38,11 +40,13 @@ const GOOGLE_SVG = `<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H
 const LOGO = `<div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div><div>Nova<small>Music</small></div></div>`;
 
 /* ================= État ================= */
-let user = null, profile = {}, library = [];
+let user = null, profile = {}, library = [], playlists = [], codes = null;
+let currentPid = null, queue = null, codeFilter = 'all';
 let unsubs = [];
 let filter = 'all', query = '';
 let current = null, adTimer = null, adCount = 0;
 const isPremium = () => premiumActive(profile);
+const isAdmin = () => !!(user && user.emailVerified && NOVA.adminEmails.map((e) => e.toLowerCase()).includes((user.email || '').toLowerCase()));
 
 /* ================= Écran de compte ================= */
 let authMode = 'login';
@@ -119,6 +123,8 @@ watchAuth(async (u) => {
   try { await ensureUser(u); } catch (e) { console.error(e); }
   unsubs.push(watchUser(u.uid, (p) => { profile = p; renderAll(); }, ));
   unsubs.push(watchLibrary(u.uid, (l) => { library = l; renderAll(); }));
+  unsubs.push(watchPlaylists(u.uid, (p) => { playlists = p; renderAll(); }));
+  if (isAdmin()) unsubs.push(watchCodes((c) => { codes = c; renderAdmin(); }));
   renderAll(); route();
 });
 if (!isConfigured) { $('#auth').classList.remove('hidden'); renderAuth(); }
@@ -141,6 +147,7 @@ function cardHTML(it) {
     </div>
     <div class="acts">
       <button class="ic ${it.fav ? 'fav-on' : ''}" data-act="fav" title="Favori"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg></button>
+      <button class="ic" data-act="add" title="Ajouter à une playlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="ic" data-act="del" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
     </div>
     <h3 title="${esc(it.name)}">${esc(it.name)}</h3>
@@ -233,7 +240,9 @@ function renderSources() {
 }
 function renderAll() {
   if (!user) return;
-  renderHome(); renderLibrary(); renderStatus();
+  renderHome(); renderLibrary(); renderStatus(); renderPlaylists();
+  if (currentPid) renderPlaylistDetail();
+  document.getElementById('navAdmin').style.display = isAdmin() ? '' : 'none';
   if (!document.activeElement || document.activeElement.id !== 'codeInput') renderPremium();
 }
 
@@ -269,6 +278,8 @@ document.addEventListener('click', (e) => {
   if (!it) return;
   if (act === 'fav') return updateItem(user.uid, id, { fav: !it.fav });
   if (act === 'del') return askRemove(id);
+  if (act === 'add') return pickPlaylist(it);
+  queue = null;
   play(it);
 });
 $('#search').addEventListener('input', (e) => { query = e.target.value; renderLibrary(); });
@@ -310,8 +321,12 @@ function startPlayback(it) {
   const size = it.video ? 'class="video"' : `height="${Number(it.height) || 380}"`;
   $('#pBody').innerHTML = `<iframe src="${esc(src)}" ${size} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(it.name)}"></iframe>`;
   $('#player').classList.add('on'); $('#player').classList.remove('collapsed');
+  const hasQ = !!(queue && queue.ids.length > 1);
+  $('#pPrev').style.display = hasQ ? '' : 'none';
+  $('#pNext').style.display = hasQ ? '' : 'none';
+  if (currentPid) renderPlaylistDetail();
 }
-function closePlayer() { current = null; $('#pBody').innerHTML = ''; $('#player').classList.remove('on'); }
+function closePlayer() { current = null; queue = null; $('#pBody').innerHTML = ''; $('#player').classList.remove('on'); }
 $('#pClose').onclick = closePlayer;
 $('#pToggle').onclick = () => $('#player').classList.toggle('collapsed');
 
@@ -337,11 +352,16 @@ $('#quickForm').onsubmit = async (e) => {
 };
 
 /* ================= Navigation ================= */
-const VIEWS = ['accueil', 'bibliotheque', 'ajouter', 'premium'];
+const VIEWS = ['accueil', 'bibliotheque', 'playlists', 'ajouter', 'premium', 'admin'];
 function route() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'accueil';
+  const h = location.hash.slice(1);
+  currentPid = h.startsWith('playlist-') ? h.slice(9) : null;
+  let v = currentPid ? 'playlist' : (VIEWS.includes(h) ? h : 'accueil');
+  if (v === 'admin' && !isAdmin()) v = 'accueil';
+  if (currentPid) renderPlaylistDetail();
+  if (v === 'admin') renderAdmin();
   document.querySelectorAll('.view').forEach((s) => s.classList.toggle('on', s.id === 'v-' + v));
-  document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.v === v));
+  document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.v === (v === 'playlist' ? 'playlists' : v)));
   document.querySelector('.main').scrollTop = 0;
 }
 window.addEventListener('hashchange', route);
@@ -352,3 +372,135 @@ if (platform === 'web') {
   a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Télécharger l\'app';
   document.querySelector('aside .nav').appendChild(a);
 }
+
+
+/* ================= Playlists perso ================= */
+const byId = (id) => library.find((i) => i.uid === id);
+const plItems = (pl) => (pl.items || []).map(byId).filter(Boolean);
+function plCoverBg(pl) { const first = plItems(pl)[0]; return first ? coverBg(first) : coverBg({ provider: 'spotify', name: pl.name || 'P' }); }
+
+function askName(title, value, cb) {
+  info(title, `<input class="input" id="plNameInput" maxlength="60" placeholder="Nom de la playlist" value="${esc(value || '')}" style="width:100%;border-radius:12px;margin-top:12px">`,
+    [{ label: 'Annuler', cls: 'ghost' }, { label: 'Valider', fn: () => { const v = (window.__plName || '').trim(); if (v) cb(v); } }]);
+  const inp = $('#plNameInput'); window.__plName = inp.value;
+  inp.oninput = () => (window.__plName = inp.value);
+  inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#infoActions .btn:last-child').click(); } };
+  setTimeout(() => inp.focus(), 50);
+}
+
+function renderPlaylists() {
+  const g = $('#plGrid'); if (!g) return;
+  g.innerHTML = playlists.length ? playlists.map((pl) => {
+    const n = plItems(pl).length;
+    return `<div class="card pcard" data-pid="${esc(pl.id)}">
+      <div class="cover" style="background:${plCoverBg(pl)}"><span class="big">${esc((pl.name || 'P').charAt(0).toUpperCase())}</span>
+        <button class="play" data-plplay="${esc(pl.id)}" aria-label="Lire"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4v16l13-8z"/></svg></button></div>
+      <h3>${esc(pl.name)}</h3><div class="meta">${n} titre${n > 1 ? 's' : ''}</div></div>`;
+  }).join('') : `<div class="empty" style="grid-column:1/-1">Aucune playlist pour l'instant.<br>Crée-en une, puis ajoute des titres avec le bouton <b>+</b> sur une carte de ta bibliothèque.</div>`;
+}
+
+function renderPlaylistDetail() {
+  const pl = playlists.find((p) => p.id === currentPid);
+  if (!pl) { $('#plName').textContent = 'Playlist introuvable'; $('#plRows').innerHTML = ''; $('#plCount').textContent = ''; return; }
+  const items = plItems(pl);
+  $('#plCover').style.background = plCoverBg(pl);
+  $('#plCover').textContent = (pl.name || 'P').charAt(0).toUpperCase();
+  $('#plName').textContent = pl.name;
+  $('#plCount').textContent = `${items.length} titre${items.length > 1 ? 's' : ''} · ${[...new Set(items.map((i) => P[i.provider]?.name))].join(', ') || 'vide'}`;
+  $('#plPlay').disabled = !items.length;
+  $('#plRows').innerHTML = items.length ? items.map((it, i) => {
+    const p = P[it.provider] || P.spotify;
+    const playing = current && current.uid === it.uid && queue && queue.pid === pl.id;
+    return `<div class="prow ${playing ? 'playing' : ''}" data-row="${esc(it.uid)}">
+      <span class="num">${playing ? '▶' : i + 1}</span>
+      <div class="mini" style="background:${coverBg(it)}">${esc(it.name.charAt(0).toUpperCase())}</div>
+      <div class="t"><b>${esc(it.name)}</b><small><span class="pill" style="background:${p.color}">${p.name}</span> ${TYPE_FR[it.type] || ''}</small></div>
+      <button class="ic" data-rm="${esc(it.uid)}" title="Retirer de la playlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>`;
+  }).join('') : `<div class="empty">Cette playlist est vide.<br>Va dans ta <a href="#bibliotheque" style="color:var(--accent2)">bibliothèque</a> et clique sur <b>+</b> sur une carte pour l'ajouter ici.</div>`;
+}
+
+function playPlaylist(pid, startId) {
+  const pl = playlists.find((p) => p.id === pid); if (!pl) return;
+  const ids = plItems(pl).map((i) => i.uid); if (!ids.length) return toast('Playlist vide');
+  const idx = Math.max(0, startId ? ids.indexOf(startId) : 0);
+  queue = { pid, ids, idx };
+  play(byId(ids[idx]));
+}
+function step(d) {
+  if (!queue) return;
+  queue.idx = (queue.idx + d + queue.ids.length) % queue.ids.length;
+  const it = byId(queue.ids[queue.idx]); if (it) play(it);
+}
+$('#pNext').onclick = () => step(1);
+$('#pPrev').onclick = () => step(-1);
+
+function pickPlaylist(it) {
+  const list = playlists.map((pl) => `<button data-pick="${esc(pl.id)}"><div class="mini" style="background:${plCoverBg(pl)}">${esc((pl.name || 'P').charAt(0).toUpperCase())}</div><div><b>${esc(pl.name)}</b><br><small style="color:var(--muted)">${plItems(pl).length} titre(s)${(pl.items || []).includes(it.uid) ? ' · déjà dedans' : ''}</small></div></button>`).join('');
+  info('Ajouter à une playlist', `« ${esc(it.name)} »<div class="pick">${list}<button data-pick="__new"><div class="mini" style="background:var(--card2)">+</div><b>Nouvelle playlist…</b></button></div>`, [{ label: 'Fermer', cls: 'ghost' }]);
+  document.querySelectorAll('[data-pick]').forEach((b) => (b.onclick = async () => {
+    $('#infoModal').classList.remove('on');
+    const pid = b.dataset.pick;
+    if (pid === '__new') return askName('Nouvelle playlist', '', async (name) => {
+      const ref = await createPlaylist(user.uid, name); await addToPlaylist(user.uid, ref.id, it.uid); toast(`Ajouté à « ${name} » ✓`);
+    });
+    await addToPlaylist(user.uid, pid, it.uid);
+    toast(`Ajouté à « ${playlists.find((p) => p.id === pid)?.name} » ✓`);
+  }));
+}
+
+$('#newPlBtn').onclick = () => askName('Nouvelle playlist', '', async (name) => {
+  const ref = await createPlaylist(user.uid, name); location.hash = '#playlist-' + ref.id;
+});
+$('#plPlay').onclick = () => currentPid && playPlaylist(currentPid);
+$('#plRename').onclick = () => { const pl = playlists.find((p) => p.id === currentPid); if (pl) askName('Renommer', pl.name, (n) => renamePlaylist(user.uid, pl.id, n)); };
+$('#plDelete').onclick = () => { const pl = playlists.find((p) => p.id === currentPid); if (!pl) return;
+  info('Supprimer la playlist ?', `« ${esc(pl.name)} » sera supprimée. Les titres restent dans ta bibliothèque.`, [
+    { label: 'Annuler', cls: 'ghost' }, { label: 'Supprimer', fn: async () => { await deletePlaylist(user.uid, pl.id); location.hash = '#playlists'; toast('Playlist supprimée'); } }]); };
+
+document.addEventListener('click', (e) => {
+  const pp = e.target.closest('[data-plplay]'); if (pp) { e.stopPropagation(); return playPlaylist(pp.dataset.plplay); }
+  const pc = e.target.closest('.pcard'); if (pc) { location.hash = '#playlist-' + pc.dataset.pid; return; }
+  const rm = e.target.closest('[data-rm]'); if (rm) { removeFromPlaylist(user.uid, currentPid, rm.dataset.rm); toast('Retiré de la playlist'); return; }
+  const row = e.target.closest('[data-row]'); if (row) playPlaylist(currentPid, row.dataset.row);
+}, true);
+
+/* ================= Admin : codes Premium ================= */
+const PLAN_DAYS = { mois: 30, an: 365, vie: null };
+const PLAN_FR = { mois: 'Mensuel', an: 'Annuel', vie: 'À vie' };
+function copy(text) { navigator.clipboard.writeText(text).then(() => toast('Copié ✓'), () => toast('Sélectionne et copie à la main')); }
+
+function renderAdmin() {
+  if (!isAdmin() || !$('#codeList')) return;
+  const f = [['all', 'Tous'], ['free', 'Libres'], ['used', 'Utilisés']];
+  $('#codeFilters').innerHTML = f.map(([k, l]) => `<button class="chip ${codeFilter === k ? 'on' : ''}" data-cf="${k}">${l}</button>`).join('');
+  if (codes === null) { $('#codeList').innerHTML = `<div class="empty">Chargement… (si ça reste bloqué, les règles Firestore ne sont pas à jour)</div>`; return; }
+  const list = codes.filter((c) => codeFilter === 'all' || (codeFilter === 'used' ? c.used : !c.used));
+  $('#codeList').innerHTML = list.length ? `<div class="panel" style="padding:6px;max-width:none">${list.map((c) => `
+    <div class="crow"><code>${esc(c.code)}</code>
+      <span>${PLAN_FR[c.plan] || esc(c.plan)}</span>
+      <span class="st ${c.used ? 'used' : 'free'}">${c.used ? 'Utilisé' : 'Libre'}</span>
+      ${c.used && c.usedAt?.toDate ? `<small style="color:var(--muted)">le ${c.usedAt.toDate().toLocaleDateString('fr-FR')}</small>` : ''}
+      <button class="ic" data-copy="${esc(c.code)}" title="Copier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+      ${!c.used ? `<button class="ic" data-delcode="${esc(c.code)}" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>` : ''}
+    </div>`).join('')}</div>` : `<div class="empty">Aucun code${codeFilter !== 'all' ? ' dans ce filtre' : ''}.</div>`;
+}
+$('#genForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const plan = $('#genPlan').value;
+  const n = Math.min(50, Math.max(1, parseInt($('#genCount').value, 10) || 1));
+  const b = $('#genBtn'); b.disabled = true;
+  try {
+    const list = await createCodes(user.uid, plan, PLAN_DAYS[plan], n);
+    $('#genOut').innerHTML = `<div class="codes-out" id="genCodes">${list.join('\n')}</div>
+      <button class="btn ghost" type="button" id="copyGen" style="margin-top:10px">Copier ${n > 1 ? 'les ' + n + ' codes' : 'le code'}</button>`;
+    $('#copyGen').onclick = () => copy(list.join('\n'));
+    toast(`${n} code${n > 1 ? 's' : ''} ${PLAN_FR[plan]} créé${n > 1 ? 's' : ''} ✓`);
+  } catch (err) { console.error(err); toast("Refusé : mets à jour les règles Firestore (README)"); }
+  finally { b.disabled = false; }
+};
+document.addEventListener('click', (e) => {
+  const cf = e.target.closest('[data-cf]'); if (cf) { codeFilter = cf.dataset.cf; renderAdmin(); return; }
+  const cp = e.target.closest('[data-copy]'); if (cp) { copy(cp.dataset.copy); return; }
+  const dc = e.target.closest('[data-delcode]'); if (dc) { deleteCode(dc.dataset.delcode).then(() => toast('Code supprimé')); }
+});

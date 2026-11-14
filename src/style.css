@@ -220,3 +220,31 @@ h2{font-size:21px;font-weight:700;margin:34px 0 14px}
   .player-body iframe{max-height:34vh}
   .player-body iframe.video{width:100%;height:auto;max-height:30vh}
 }
+
+/* ---------- Playlists ---------- */
+.card .acts{flex-wrap:wrap}
+.pcard{cursor:pointer}
+.pl-head{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.pl-cover{width:180px;height:180px;border-radius:18px;display:grid;place-items:center;font-size:64px;font-weight:800;box-shadow:0 20px 50px #0007;flex:none}
+.tag-sm{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.prow{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:12px;cursor:pointer}
+.prow:hover{background:var(--card)}
+.prow.playing{background:var(--card2)}
+.prow .num{width:22px;text-align:right;color:var(--muted);font-size:14px}
+.prow .mini{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-weight:800;flex:none}
+.prow .t{flex:1;min-width:0}
+.prow .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .t small{color:var(--muted)}
+.pick{display:flex;flex-direction:column;gap:8px;margin-top:14px;max-height:320px;overflow:auto}
+.pick button{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;background:var(--card);text-align:left}
+.pick button:hover{background:var(--card2)}
+.pick .mini{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;flex:none}
+select.input{appearance:none;cursor:pointer;font-size:15px;padding:12px 16px}
+select.input option{background:#171726;color:#f1f0ff}
+/* ---------- Admin ---------- */
+.codes-out{margin-top:16px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:15px;line-height:1.8;white-space:pre-wrap;user-select:all}
+.crow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px;flex-wrap:wrap}
+.crow code{font-family:ui-monospace,Consolas,monospace;font-size:15px;flex:1;min-width:150px}
+.crow .st{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px}
+.st.free{background:#123d2b;color:#5ce0a0}.st.used{background:#3a2330;color:#ff9db0}
+@media (max-width:820px){.pl-cover{width:120px;height:120px;font-size:44px}}

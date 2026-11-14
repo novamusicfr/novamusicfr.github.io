@@ -1,6 +1,7 @@
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, collection,
-  onSnapshot, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp,
+  onSnapshot, query, orderBy, limit, serverTimestamp, writeBatch, increment, Timestamp,
+  arrayUnion, arrayRemove,
 } from 'firebase/firestore';
 import { db } from './firebase.js';
 
@@ -75,3 +76,44 @@ export async function redeemCode(uid, raw) {
   await batch.commit();
   return c;
 }
+
+/* ================= Playlists perso ================= */
+export const watchPlaylists = (uid, cb) =>
+  onSnapshot(query(collection(db, 'users', uid, 'playlists'), orderBy('createdAt', 'desc')),
+    (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+
+export const createPlaylist = (uid, name) =>
+  addDoc(collection(db, 'users', uid, 'playlists'), { name: String(name).trim().slice(0, 60) || 'Ma playlist', items: [], createdAt: serverTimestamp() });
+export const renamePlaylist = (uid, id, name) =>
+  updateDoc(doc(db, 'users', uid, 'playlists', id), { name: String(name).trim().slice(0, 60) });
+export const deletePlaylist = (uid, id) => deleteDoc(doc(db, 'users', uid, 'playlists', id));
+export const addToPlaylist = (uid, id, itemId) =>
+  updateDoc(doc(db, 'users', uid, 'playlists', id), { items: arrayUnion(itemId) });
+export const removeFromPlaylist = (uid, id, itemId) =>
+  updateDoc(doc(db, 'users', uid, 'playlists', id), { items: arrayRemove(itemId) });
+
+/* ================= Admin : codes Premium ================= */
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I pour éviter les confusions
+function randomCode() {
+  const r = crypto.getRandomValues(new Uint32Array(8));
+  const part = (a) => Array.from(a, (n) => ALPHA[n % ALPHA.length]).join('');
+  return `NOVA-${part(r.slice(0, 4))}-${part(r.slice(4, 8))}`;
+}
+/** plan : 'mois' | 'an' | 'vie' ; days : nombre ou null (à vie) */
+export async function createCodes(uid, plan, days, count) {
+  const batch = writeBatch(db);
+  const codes = [];
+  for (let i = 0; i < count; i++) {
+    const code = randomCode();
+    codes.push(code);
+    const data = { used: false, plan, createdAt: serverTimestamp(), createdBy: uid };
+    if (days) data.days = days;
+    batch.set(doc(db, 'codes', code), data);
+  }
+  await batch.commit();
+  return codes;
+}
+export const watchCodes = (cb) =>
+  onSnapshot(query(collection(db, 'codes'), orderBy('createdAt', 'desc'), limit(200)),
+    (s) => cb(s.docs.map((d) => ({ code: d.id, ...d.data() }))), () => cb(null));
+export const deleteCode = (code) => deleteDoc(doc(db, 'codes', code));

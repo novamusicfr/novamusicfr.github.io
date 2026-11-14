@@ -89,7 +89,8 @@ export function authErrorFR(e) {
     'google-timeout': "La connexion Google a expiré. Réessaie.",
   };
   for (const k in map) if (code.includes(k)) return map[k];
-  if (/canceled|cancelled|12501/i.test(code)) return "Connexion Google annulée.";
-  if (/10:|DEVELOPER_ERROR/i.test(code)) return "Google n'est pas encore configuré pour l'app Android (empreinte SHA-1 manquante, voir README).";
-  return "Une erreur est survenue. Réessaie.";
+  if (/canceled|cancelled|12501|16:/i.test(code)) return "Connexion Google annulée.";
+  if (/10:|DEVELOPER_ERROR|28444|Developer console/i.test(code)) return "Google refuse l'app (configuration Android/SHA-1). Code : " + String(code).slice(0, 120);
+  if (/No credential|NoCredential/i.test(code)) return "Aucun compte Google trouvé sur ce téléphone. Ajoute un compte Google dans les Paramètres Android puis réessaie.";
+  return "Une erreur est survenue. Code : " + String(code || e).slice(0, 160);
 }
