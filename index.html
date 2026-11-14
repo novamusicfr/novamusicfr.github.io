@@ -34,8 +34,10 @@
     <nav class="nav">
       <a href="#accueil" data-v="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Accueil</a>
       <a href="#bibliotheque" data-v="bibliotheque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16M9 4v16M14 4l6 16"/></svg>Bibliothèque</a>
+      <a href="#playlists" data-v="playlists"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h12M3 12h12M3 18h8M17 14v7m-3.5-3.5h7"/></svg>Mes playlists</a>
       <a href="#ajouter" data-v="ajouter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Importer</a>
       <a href="#premium" data-v="premium" class="prem"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>Nova Premium</a>
+      <a href="#admin" data-v="admin" id="navAdmin" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Admin</a>
     </nav>
     <div class="side-foot">
       <div class="adbox" id="sideAd">
@@ -118,6 +120,56 @@
       </div>
       <div id="premiumZone"></div>
     </section>
+    <!-- Mes playlists -->
+    <section class="view" id="v-playlists">
+      <div class="row" style="justify-content:space-between">
+        <div><h1>Mes playlists</h1><p class="sub">Mélange tes titres Spotify, YouTube, Deezer… dans tes propres playlists.</p></div>
+        <button class="btn" id="newPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Nouvelle playlist</button>
+      </div>
+      <div class="grid" id="plGrid" style="margin-top:24px"></div>
+    </section>
+
+    <!-- Une playlist -->
+    <section class="view" id="v-playlist">
+      <a href="#playlists" class="linkbtn" style="margin:0 0 14px">← Mes playlists</a>
+      <div class="pl-head">
+        <div class="pl-cover" id="plCover"></div>
+        <div style="flex:1;min-width:0">
+          <span class="tag-sm">Playlist</span>
+          <h1 id="plName">—</h1>
+          <p class="sub" id="plCount"></p>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" id="plPlay"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4v16l13-8z"/></svg>Lire</button>
+            <button class="btn ghost" id="plRename">Renommer</button>
+            <button class="btn ghost" id="plDelete">Supprimer</button>
+          </div>
+        </div>
+      </div>
+      <div id="plRows" style="margin-top:24px"></div>
+    </section>
+
+    <!-- Admin -->
+    <section class="view" id="v-admin">
+      <h1>Admin · Codes Premium</h1>
+      <p class="sub">Génère des codes à donner (Discord, concours…). Chaque code ne marche qu'une seule fois.</p>
+      <form class="panel" id="genForm">
+        <div class="row" style="align-items:flex-end">
+          <div style="flex:1;min-width:160px"><label for="genPlan">Formule</label>
+            <select class="input" id="genPlan" style="width:100%;border-radius:12px">
+              <option value="mois">Mensuel (30 jours)</option>
+              <option value="an">Annuel (365 jours)</option>
+              <option value="vie">À vie</option>
+            </select></div>
+          <div style="width:120px"><label for="genCount">Nombre</label>
+            <input class="input" id="genCount" type="number" min="1" max="50" value="1" style="width:100%;border-radius:12px;min-width:0"></div>
+          <button class="btn gold" type="submit" id="genBtn">Générer</button>
+        </div>
+        <div id="genOut"></div>
+      </form>
+      <h2>Codes créés</h2>
+      <div class="filters" id="codeFilters"></div>
+      <div id="codeList"></div>
+    </section>
   </main>
 
   <!-- ===== Player ===== -->
@@ -126,6 +178,8 @@
       <div class="mini" id="pMini">N</div>
       <div class="t"><b id="pTitle">—</b><small id="pSub">—</small></div>
       <div class="eq"><i></i><i></i><i></i><i></i></div>
+      <button class="ic" id="pPrev" title="Précédent" style="display:none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button class="ic" id="pNext" title="Suivant" style="display:none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
       <a class="ic" id="pOpen" href="#" target="_blank" rel="noopener" title="Ouvrir sur la plateforme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M19 14v6H5V5h6"/></svg></a>
       <button class="ic" id="pToggle" title="Réduire"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
       <button class="ic" id="pClose" title="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -136,6 +190,7 @@
   <nav class="mob-nav nav">
     <a href="#accueil" data-v="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>Accueil</a>
     <a href="#bibliotheque" data-v="bibliotheque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16M9 4v16M14 4l6 16"/></svg>Biblio</a>
+    <a href="#playlists" data-v="playlists"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h12M3 12h12M3 18h8M17 14v7m-3.5-3.5h7"/></svg>Playlists</a>
     <a href="#ajouter" data-v="ajouter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Importer</a>
     <a href="#premium" data-v="premium"><svg viewBox="0 0 24 24" fill="#ffc94d"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>Premium</a>
   </nav>

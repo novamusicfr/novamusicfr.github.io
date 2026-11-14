@@ -9,6 +9,12 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null; }
     function isMe(userId) { return signedIn() && request.auth.uid == userId; }
+    // Admin = ton compte (change l'e-mail ici ET dans firebase-config.js → adminEmails)
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'xkryz0mique@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
 
     // Vérifie qu'un passage en Premium vient bien d'un code consommé
     // dans la même écriture groupée (batch).
@@ -43,13 +49,27 @@ service cloud.firestore {
           && request.resource.data.embed is string
           && request.resource.data.embed.size() <= 600;
       }
+
+      // Playlists perso (mélange de titres de la bibliothèque)
+      match /playlists/{playlistId} {
+        allow read, delete: if isMe(userId);
+        allow create, update: if isMe(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.items is list
+          && request.resource.data.items.size() <= 500;
+      }
     }
 
     // Codes Premium : un document par code (ID du document = le code).
     // Champs : used (false), plan ("mois" | "an" | "vie"), days (optionnel, ex. 30)
     match /codes/{code} {
       allow get: if signedIn();          // lire UN code dont on connaît le nom
-      allow list: if false;              // impossible de lister tous les codes
+      allow list: if isAdmin();          // seul l'admin voit la liste
+      allow create: if isAdmin()
+        && request.resource.data.used == false
+        && request.resource.data.plan in ['mois', 'an', 'vie'];
+      allow delete: if isAdmin();
       allow update: if signedIn()
         && resource.data.used == false
         && request.resource.data.used == true

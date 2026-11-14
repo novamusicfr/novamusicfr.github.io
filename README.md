@@ -72,20 +72,19 @@ git push origin v1.0.0
 
 ## 👑 Donner Nova Premium à quelqu'un
 
-Les codes sont dans Firestore. Personne ne peut se mettre Premium sans un code valide, et chaque code ne marche **qu'une fois** (c'est vérifié par les règles de sécurité).
+Connecte-toi dans Nova Music avec ton compte admin (**xkryz0mique@gmail.com**) : un onglet **Admin** apparaît dans le menu.
 
-1. Firebase → **Firestore Database** → **Commencer une collection** → ID : `codes` (la première fois seulement).
-2. **Ajouter un document** :
-   - **ID du document** = le code, en MAJUSCULES (lettres, chiffres, tirets). Ex. : `NOVA-7K2P-QX94`
-   - Champs :
-     - `used` (boolean) = `false`
-     - `plan` (string) = `mois`, `an` ou `vie`
-     - `days` (number) = `30` pour un mois, `365` pour un an — **ne mets pas ce champ** pour un code à vie
-3. Envoie le code à la personne (ticket Discord par exemple). Elle l'entre dans **Nova Premium → Tu as un code ?** et les pubs disparaissent sur **tous ses appareils**.
+1. Choisis la formule (Mensuel 30 j, Annuel 365 j ou À vie) et le nombre de codes (jusqu'à 50 d'un coup).
+2. Clique **Générer** → les codes s'affichent (ex. `NOVA-7K2P-QX94`), bouton **Copier**.
+3. Envoie un code à la personne. Elle l'entre dans **Nova Premium → Tu as un code ?** et les pubs disparaissent sur tous ses appareils.
 
-Pour voir qui a utilisé un code : le document affiche `usedBy` (l'ID du compte) et `usedAt`.
+La liste en dessous montre tous les codes avec leur état (Libre / Utilisé). Chaque code ne marche qu'**une seule fois** : c'est vérifié par les règles de sécurité Firestore, pas seulement par l'app.
 
-> 💳 Pour vendre le Premium directement par carte (Stripe/PayPal) sans passer par des codes, il faudra une Cloud Function Firebase (plan Blaze) qui crée le code automatiquement après paiement. La base est prête pour ça.
+> Pour ajouter un autre admin : ajoute son e-mail dans `firebase-config.js` (`adminEmails`) **et** dans `firestore.rules` (fonction `isAdmin`), puis republie les règles dans Firebase.
+
+## 🎶 Playlists perso
+
+Onglet **Mes playlists** → **Nouvelle playlist**, ou bouton **+** sur n'importe quelle carte de la bibliothèque. Une playlist peut mélanger Spotify, YouTube, Deezer, SoundCloud et Apple Music ; les boutons ⏮ ⏭ du lecteur passent au titre suivant/précédent.
 
 ---
 

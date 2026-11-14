@@ -17,6 +17,8 @@ export const firebaseConfig = {
 //  RÉGLAGES NOVA MUSIC
 // =====================================================================
 export const NOVA = {
+  // Comptes qui voient le panneau Admin (doit correspondre à firestore.rules)
+  adminEmails: ["xkryz0mique@gmail.com"],
   adSeconds: 5,                                   // durée de la pub (compte gratuit)
   discordUrl: "https://discord.gg/TON-INVITE",    // où les gens obtiennent un code Premium
   plans: [
