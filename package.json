@@ -44,7 +44,7 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.png",
-      "artifactName": "NovaMusic-Setup-${version}.${ext}"
+      "artifactName": "NovaMusic-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,

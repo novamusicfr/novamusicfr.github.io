@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: r('./index.html'),
         desktopLogin: r('./desktop-login.html'),
+        telecharger: r('./telecharger.html'),
       },
     },
   },

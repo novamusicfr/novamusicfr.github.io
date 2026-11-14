@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<title>Télécharger Nova Music</title>
+<meta name="description" content="Nova Music : toutes tes playlists Spotify, YouTube, Deezer, SoundCloud et Apple Music au même endroit. Disponible sur PC, Android et iPhone.">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./src/style.css">
+<style>
+  body{overflow:auto}
+  .dl{min-height:100vh;padding:max(28px,env(safe-area-inset-top)) 22px 60px;
+    background:radial-gradient(900px 500px at 15% 0%,#7c5cff40,transparent 65%),radial-gradient(700px 500px at 100% 100%,#22d3ee26,transparent 60%),var(--bg)}
+  .wrap{max-width:1000px;margin:0 auto}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .top .logo{margin:0}
+  .hero2{text-align:center;padding:60px 0 34px}
+  .hero2 h1{font-size:clamp(34px,6vw,58px);line-height:1.05}
+  .hero2 h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero2 p{color:var(--muted);font-size:18px;max-width:620px;margin:16px auto 0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px}
+  .dcard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:10px;transition:.18s}
+  .dcard:hover{transform:translateY(-3px);border-color:#4a4a72}
+  .dcard.mine{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 12px 40px #7c5cff22}
+  .dcard .ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:var(--card2)}
+  .dcard h3{font-size:20px}
+  .dcard p{color:var(--muted);font-size:14px;line-height:1.5;flex:1}
+  .dcard .btn{justify-content:center;text-decoration:none;border-radius:14px}
+  .tag{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent2)}
+  .how{margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .how div{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;font-size:14px;color:var(--muted);line-height:1.6}
+  .how b{color:var(--text);display:block;margin-bottom:6px;font-size:15px}
+  .feat{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+  .feat span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:50px}
+  footer a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="dl"><div class="wrap">
+  <div class="top">
+    <div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div><div>Nova<small>Music</small></div></div>
+    <a class="btn ghost" href="./index.html" style="text-decoration:none">Ouvrir la version web →</a>
+  </div>
+
+  <div class="hero2">
+    <h1>Toute ta musique.<br><span>Une seule app.</span></h1>
+    <p>Importe tes playlists Spotify, YouTube, Deezer, SoundCloud et Apple Music, et retrouve-les sur ton PC, ton téléphone et le web avec le même compte.</p>
+    <div class="feat"><span>🔐 Compte Google ou e-mail</span><span>🔄 Synchro entre appareils</span><span>👑 Nova Premium sans pub</span></div>
+  </div>
+
+  <div class="cards">
+    <div class="dcard" data-os="windows">
+      <div class="ico">💻</div><span class="tag">Windows 10 / 11</span><h3>App PC</h3>
+      <p>Installeur Windows (.exe). Au premier lancement, Windows peut afficher « Éditeur inconnu » : clique sur « Informations complémentaires » puis « Exécuter quand même ».</p>
+      <a class="btn" id="dlWin" href="#">Télécharger pour Windows</a>
+    </div>
+    <div class="dcard" data-os="android">
+      <div class="ico">🤖</div><span class="tag">Android 6+</span><h3>App Android</h3>
+      <p>Fichier .apk. Ouvre-le sur ton téléphone et autorise l'installation depuis cette source quand Android te le demande.</p>
+      <a class="btn" id="dlApk" href="#">Télécharger l'APK</a>
+    </div>
+    <div class="dcard" data-os="ios">
+      <div class="ico">🍎</div><span class="tag">iPhone / iPad</span><h3>App iPhone</h3>
+      <p>Ouvre ce site dans Safari, appuie sur Partager <b>⬆︎</b> puis « Sur l'écran d'accueil ». Nova Music s'installe comme une app.</p>
+      <a class="btn" href="./index.html">Ouvrir dans Safari</a>
+    </div>
+    <div class="dcard" data-os="web">
+      <div class="ico">🌐</div><span class="tag">Navigateur</span><h3>Version web</h3>
+      <p>Rien à installer : connecte-toi et écoute directement depuis n'importe quel navigateur. Sur Chrome, tu peux aussi l'installer comme une app.</p>
+      <a class="btn ghost" href="./index.html">Lancer Nova Music</a>
+    </div>
+  </div>
+
+  <div class="how">
+    <div><b>1. Installe l'app</b>Choisis ta plateforme au-dessus. La version web marche partout, sans installation.</div>
+    <div><b>2. Crée ton compte</b>Avec Google ou ton e-mail. Le même compte marche sur tous tes appareils.</div>
+    <div><b>3. Colle tes playlists</b>Copie le lien de partage d'une playlist Spotify, YouTube, Deezer… et colle-le dans « Importer ».</div>
+  </div>
+
+  <footer>
+    <p id="ver">Toujours la dernière version, mise à jour automatiquement.</p>
+    <p style="margin-top:8px"><a id="allRel" href="#">Toutes les versions</a> · Nova Music</p>
+  </footer>
+</div></div>
+
+<script>
+  // Fichiers publiés automatiquement à chaque mise à jour (GitHub Releases)
+  var REPO = 'novamusicfr/novamusicfr.github.io';
+  var base = 'https://github.com/' + REPO + '/releases/latest/download/';
+  document.getElementById('dlWin').href = base + 'NovaMusic-Setup.exe';
+  document.getElementById('dlApk').href = base + 'NovaMusic.apk';
+  document.getElementById('allRel').href = 'https://github.com/' + REPO + '/releases';
+  // Met en avant la plateforme du visiteur
+  var ua = navigator.userAgent, os = /android/i.test(ua) ? 'android' : /iphone|ipad|ipod/i.test(ua) ? 'ios' : /windows/i.test(ua) ? 'windows' : 'web';
+  var mine = document.querySelector('[data-os="' + os + '"]');
+  if (mine) { mine.classList.add('mine'); mine.parentNode.prepend(mine); }
+</script>
+</body>
+</html>

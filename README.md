@@ -8,7 +8,8 @@ Les comptes se créent avec **Google ou e-mail**, la bibliothèque est **synchro
 | 💻 Windows | `NovaMusic-Setup-1.0.0.exe` (installeur) |
 | 📱 Android | `NovaMusic.apk` |
 | 🍎 iPhone | Version web installable (Safari → Partager → « Sur l'écran d'accueil ») |
-| 🌐 Web | `https://TON-PSEUDO.github.io/nova-music/` |
+| 📥 Page de téléchargement | https://novamusicfr.github.io/telecharger.html |
+| 🌐 Web | `https://novamusicfr.github.io` |
 
 Tout se fabrique **automatiquement sur GitHub** : tu n'as rien à installer sur ton PC.
 
@@ -22,7 +23,7 @@ Tout se fabrique **automatiquement sur GitHub** : tu n'as rien à installer sur 
 4. Menu de gauche → **Authentication** → **Commencer** → onglet **Sign-in method** :
    - active **Adresse e-mail/Mot de passe** ;
    - active **Google** (choisis ton e-mail d'assistance) → **Enregistrer**.
-5. **Authentication → Paramètres → Domaines autorisés** → ajoute `TON-PSEUDO.github.io` (pour la version web/iPhone). `localhost` y est déjà : c'est lui qu'utilise l'app PC.
+5. **Authentication → Paramètres → Domaines autorisés** → ajoute `novamusicfr.github.io` (pour la version web/iPhone). `localhost` y est déjà : c'est lui qu'utilise l'app PC.
 6. Menu de gauche → **Firestore Database** → **Créer une base de données** → région `europe-west` → **mode production**.
 7. Onglet **Règles** de Firestore → remplace tout par le contenu de **`firestore.rules`** → **Publier**.
 
@@ -56,7 +57,7 @@ Sans cette clé, l'APK se construit quand même, mais la connexion Google ne mar
 À chaque `push` sur `main`, GitHub fabrique tout (≈ 5–10 min) :
 
 - **Actions** → dernier build → en bas, **Artifacts** : `NovaMusic-Windows` (le `.exe`) et `NovaMusic-Android` (l'`.apk`).
-- La version web est publiée sur `https://TON-PSEUDO.github.io/nova-music/`.
+- La version web est publiée sur `https://novamusicfr.github.io`.
 
 Pour une **page de téléchargement propre**, crée un tag :
 
