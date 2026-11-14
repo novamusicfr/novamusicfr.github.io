@@ -1,0 +1,120 @@
+# Fabrique automatiquement Nova Music à chaque push sur "main" :
+#  - NovaMusic-Setup.exe  (Windows)
+#  - NovaMusic.apk        (Android)
+#  - la version web/iPhone sur GitHub Pages
+# Récupère les fichiers dans l'onglet Actions → dernier build → "Artifacts".
+# Pousse un tag (ex. v1.0.0) pour créer une Release avec les fichiers à télécharger.
+name: Build Nova Music
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier la config Firebase
+        run: |
+          if grep -q "COLLE_TON_API_KEY" firebase-config.js; then
+            echo "::error::firebase-config.js n'est pas rempli (README étape 1)"; exit 1
+          fi
+
+  windows:
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm run build
+      - run: npx electron-builder --win --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NovaMusic-Windows
+          path: release/*.exe
+
+  android:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm install
+      - run: npm run build
+      - run: npx cap add android
+
+      - name: Config Firebase Android
+        run: |
+          if [ ! -f android-config/google-services.json ]; then
+            echo "::error::android-config/google-services.json manquant (README étape 3)"; exit 1
+          fi
+          cp android-config/google-services.json android/app/google-services.json
+          # active la connexion Google native du plugin Firebase
+          printf '\next {\n    rgcfaIncludeGoogle = true\n}\n' >> android/variables.gradle
+
+      - name: Clé de signature (empreinte SHA-1 fixe)
+        env:
+          KS: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > ~/.android/debug.keystore
+          else
+            echo "::warning::Secret ANDROID_DEBUG_KEYSTORE absent : la connexion Google ne marchera pas sur Android (README étape 4)"
+          fi
+
+      - run: npx cap sync android
+      - name: Compiler l'APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../NovaMusic.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NovaMusic-Android
+          path: NovaMusic.apk
+
+  web:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.exe
+            out/*.apk
